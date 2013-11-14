@@ -9,10 +9,11 @@ import logging
 # time between two consecutive restart attempts (in seconds)
 RESTART_INTERVAL = 10 # 60 * 60
 LOCK_FILE_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'apache-spinner.lock')
-SITE = 'http://educationdive.com'
+URL = 'http://educationdive.com'
 APACHE_LOG_FILE = '/var/log/apache2/error.log'
+LOG_FILE = 'apache-spinner.log'
 
-logging.basicConfig(filename='apache-spinner.log', level=logging.DEBUG, filemode='w')
+logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG, filemode='w')
 logger = logging.getLogger(__file__)
 
 def create_lockfile():
@@ -82,8 +83,8 @@ def restart_apache():
 def main():
     import requests
 
-    logger.info("Requesting a page from: %s" % SITE)
-    response = requests.get(SITE)
+    logger.info("Requesting a page from: %s" % URL)
+    response = requests.get(URL)
     status = response.status_code
     (success, check_page_msg) = check_page(response.content)
     logger.info("Got response back: %s" % response)
@@ -116,11 +117,13 @@ def initiate_restart():
 
 
 if __name__ == '__main__':
-    import sys
-    force_restart = '--force' in sys.argv
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", help="Force Apache restart (don't do page checks)", action="store_true")
+    args = parser.parse_args()
 
     logger.info("Program started")
-    if force_restart:
+    if args.force:
         logger.info("--force passed. Forcing restart (no page sanity checks).")
         initiate_restart()
     else:
